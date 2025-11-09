@@ -1,0 +1,9 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# 数据库/运行产物
+*.db
+*.sqlite
+*.log
