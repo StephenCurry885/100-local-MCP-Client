@@ -44,6 +44,7 @@ def run():
     mcp = FastMCP("sqlite-demo")
 
     # 一个简单的“状态”；在闭包里用也可
+    mcp.state = {}
     mcp.state["db_path"] = db_path
 
     @mcp.tool()
@@ -81,18 +82,14 @@ def run():
             conn.close()
 
     print("✅ SQLite DB:", db_path)
+
     if args.transport == "stdio":
         print("🚀 MCP SQLite server running on stdio")
-        mcp.run_stdio()
+        mcp.run(transport="stdio")
     else:
-        print(f"🚀 MCP SQLite server running on SSE http://{args.host}:{args.port}/sse")
-        # FastMCP 提供 sse 服务（若版本不同，方法名可能为 run_sse/serve_sse/serve 等，
-        # 出现报错时，可根据提示调整为相应方法名）
-        try:
-            mcp.run_sse(host=args.host, port=args.port)
-        except AttributeError:
-            # 兼容某些版本
-            mcp.serve(host=args.host, port=args.port)
+        print(f"🚀 MCP SQLite server running on SSE (default localhost:8000/sse)")
+        mcp.run(transport="sse")
+
 
 if __name__ == "__main__":
     run()

@@ -35,7 +35,7 @@ except Exception as e:
 
 # ---- 配置 ----
 SERVER_SSE_URL = os.environ.get("MCP_SSE_URL", "http://127.0.0.1:8000/sse")
-MODEL_NAME = os.environ.get("OLLAMA_MODEL", "deepseek-r1")
+MODEL_NAME = os.environ.get("OLLAMA_MODEL", "qwen2.5:7b-instruct")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SYSTEM_PROMPT_PATH = os.path.join(BASE_DIR, "system_prompt.txt")
@@ -48,15 +48,25 @@ def build_llm():
     return Ollama(model=MODEL_NAME, request_timeout=120.0)
 
 async def get_agent(mcp_tool: McpToolSpec, llm) -> FunctionAgent:
-    # 把 MCP 服务器暴露的工具转成 LlamaIndex 的原生 Tool 对象
     tools = await mcp_tool.to_tool_list_async()
-    agent = FunctionAgent(
+
+    kwargs = dict(
         name="Agent",
         description="agent that interacts with our database via MCP",
         tools=tools,
         llm=llm,
         system_prompt=SYSTEM_PROMPT,
     )
+
+    # 乐观尝试：限制最多 3 步（避免无限循环）
+    try:
+        kwargs["max_steps"] = 3
+    except Exception:
+        pass
+
+    agent = FunctionAgent(**kwargs)
+    print("[Debug] tools bound to agent:", [t.metadata.name for t in tools])
+
     return agent
 
 async def handle_user_message(message_content: str, agent: FunctionAgent, agent_context: Context, verbose: bool = False) -> str:
@@ -85,6 +95,11 @@ async def main():
     while True:
         try:
             msg = input("> ").strip()
+            # 直接路由（避免模型做不必要的判定）
+            if msg in {"获取数据", "查看全部", "查询全部"}:
+                result = await mcp_tool.client.call_tool("read_data", {"query": "SELECT * FROM people"})
+                print("\n[ToolResult/read_data] rows:", result, "\n")
+                continue
         except (EOFError, KeyboardInterrupt):
             print("\nBye!")
             break
