@@ -310,6 +310,8 @@ Agent: 查询到 1 条记录：
 ## 🧾 License
 
 MIT License（自由使用、修改和扩展）
+## Star History
 
+[![Star History Chart](https://api.star-history.com/svg?repos=StephenCurry885/100-local-MCP-Client&type=date&legend=top-left)](https://www.star-history.com/?utm_source=chatgpt.com#StephenCurry885/100-local-MCP-Client&type=date&legend=top-left)
 
 
